@@ -1,0 +1,47 @@
+services:
+  # Backend Service
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: docmill-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - docmill-data:/data/docmill
+      - model-cache:/root/.cache/huggingface
+    environment:
+      - DOCMILL_DATA_DIR=/data/docmill
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: docmill-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  docmill-data:
+    driver: local
+  model-cache:
+    driver: local

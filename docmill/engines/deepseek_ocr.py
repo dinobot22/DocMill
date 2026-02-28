@@ -86,7 +86,7 @@ class DeepSeekOCREngine(BaseEngine):
         logger.info("初始化 DeepSeek OCR 客户端: endpoint=%s", vllm_endpoint)
 
         try:
-            from docmill.llm_clients.openai_compat import OpenAICompatClient
+            from docmill.clients.openai_compat import OpenAICompatClient
 
             self._client = OpenAICompatClient(
                 base_url=vllm_endpoint,

@@ -1,10 +1,10 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "docmill"
-version = "0.1.0"
+version = "0.2.0"
 description = "A unified inference runtime for OCR & VLM document understanding."
 readme = "README.md"
 license = {text = "GPL-3.0"}
@@ -16,6 +16,7 @@ authors = [
 dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
     "openai>=1.0.0",
     "pyyaml>=6.0",
     "pydantic>=2.0.0",
@@ -31,7 +32,11 @@ dev = [
     "ruff>=0.1.0",
 ]
 
+[project.scripts]
+docmill = "docmill.server.main:main"
+
 [tool.setuptools.packages.find]
+where = ["."]
 include = ["docmill*"]
 
 [tool.ruff]
