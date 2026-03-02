@@ -85,6 +85,9 @@ class SidecarLauncher:
         if port is None:
             port = find_free_port()
 
+        # 展开路径中的 ~ 和环境变量
+        model_path = str(Path(model_path).expanduser().resolve())
+
         # 构建 vLLM 启动命令
         cmd = [
             sys.executable,

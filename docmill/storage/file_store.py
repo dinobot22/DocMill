@@ -94,6 +94,18 @@ class FileStore:
                         import json
                         with open(meta_file, "r", encoding="utf-8") as f:
                             data = json.load(f)
+
+                        # 查找实际文件（带扩展名）
+                        actual_file = None
+                        for f in file_dir.iterdir():
+                            if f.is_file() and f.name != "meta.json":
+                                actual_file = f
+                                break
+
+                        if actual_file is None:
+                            logger.warning("找不到文件: %s", file_dir)
+                            continue
+
                         file_info = FileInfo(
                             file_id=data["file_id"],
                             filename=data["filename"],
@@ -101,7 +113,7 @@ class FileStore:
                             size=data["size"],
                             hash=data["hash"],
                             created_at=datetime.fromisoformat(data["created_at"]),
-                            path=file_dir / "file",
+                            path=actual_file,
                         )
                         self._files[file_info.file_id] = file_info
                     except Exception as e:
@@ -145,8 +157,12 @@ class FileStore:
         file_dir = self.storage_dir / file_id
         file_dir.mkdir(parents=True, exist_ok=True)
 
+        # 保留原始文件扩展名
+        original_ext = Path(filename).suffix.lower()
+        file_name = f"file{original_ext}" if original_ext else "file"
+        file_path = file_dir / file_name
+
         # 保存文件
-        file_path = file_dir / "file"
         with open(file_path, "wb") as f:
             f.write(content)
 
