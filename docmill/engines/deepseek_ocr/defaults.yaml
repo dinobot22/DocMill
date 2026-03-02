@@ -1,5 +1,3 @@
-"""DeepSeek OCR Engine 默认配置。"""
-
 engine_name: deepseek_ocr
 requires_vllm: true
 estimate_vram_mb: 0
