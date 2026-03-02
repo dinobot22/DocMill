@@ -101,6 +101,7 @@ class DocMill:
                 - max_model_len: 最大序列长度（默认 4096）
                 - tensor_parallel_size: 张量并行大小（默认 1）
                 - extra_args: 额外启动参数
+                - served_model_name: vLLM 服务注册的模型名称
             **engine_kwargs: Engine 初始化参数。
 
         Raises:
@@ -252,8 +253,10 @@ class DocMill:
         tensor_parallel_size = vllm_config.get("tensor_parallel_size", 1)
         trust_remote_code = vllm_config.get("trust_remote_code", True)
         extra_args = vllm_config.get("extra_args", [])
+        served_model_name = vllm_config.get("served_model_name")
 
-        logger.info("启动 vLLM sidecar: model=%s, gpu=%d", model_path, gpu_id)
+        logger.info("启动 vLLM sidecar: model=%s, gpu=%d, served_name=%s",
+                   model_path, gpu_id, served_model_name)
 
         sidecar = self._sidecar_pool.acquire(
             model_path=model_path,
@@ -263,6 +266,7 @@ class DocMill:
             tensor_parallel_size=tensor_parallel_size,
             trust_remote_code=trust_remote_code,
             extra_args=extra_args,
+            served_model_name=served_model_name,
         )
 
         return sidecar.endpoint

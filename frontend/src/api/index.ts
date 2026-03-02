@@ -42,6 +42,7 @@ export interface RegisterModelRequest {
     tensor_parallel_size?: number
     trust_remote_code?: boolean
     extra_args?: string[]
+    served_model_name?: string
   }
   engine_kwargs?: Record<string, any>
 }

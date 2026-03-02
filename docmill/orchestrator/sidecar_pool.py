@@ -86,6 +86,7 @@ class SidecarPool:
         trust_remote_code: bool = True,
         extra_args: list[str] | None = None,
         reuse: bool = True,
+        served_model_name: str | None = None,
     ) -> SidecarEntry:
         """获取 sidecar 实例。
 
@@ -101,6 +102,7 @@ class SidecarPool:
             trust_remote_code: 是否信任远程代码。
             extra_args: 额外启动参数。
             reuse: 是否复用已有 sidecar。
+            served_model_name: vLLM 服务注册的模型名称。
 
         Returns:
             SidecarEntry 实例。
@@ -127,6 +129,7 @@ class SidecarPool:
                 tensor_parallel_size=tensor_parallel_size,
                 trust_remote_code=trust_remote_code,
                 extra_args=extra_args,
+                served_model_name=served_model_name,
             )
 
             # 等待就绪

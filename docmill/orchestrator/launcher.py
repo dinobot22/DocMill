@@ -66,6 +66,7 @@ class SidecarLauncher:
         trust_remote_code: bool = True,
         extra_args: list[str] | None = None,
         gpu_id: int = 0,
+        served_model_name: str | None = None,
     ) -> SidecarProcess:
         """启动 vLLM sidecar 进程。
 
@@ -78,6 +79,7 @@ class SidecarLauncher:
             trust_remote_code: 是否信任远程代码。
             extra_args: 额外 vLLM 启动参数。
             gpu_id: GPU 设备索引。
+            served_model_name: vLLM 服务注册的模型名称。
 
         Returns:
             SidecarProcess 实例。
@@ -102,6 +104,9 @@ class SidecarLauncher:
 
         if trust_remote_code:
             cmd.append("--trust-remote-code")
+
+        if served_model_name:
+            cmd.extend(["--served-model-name", served_model_name])
 
         if extra_args:
             cmd.extend(extra_args)

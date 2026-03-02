@@ -157,6 +157,18 @@
               class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             />
           </div>
+
+          <!-- vLLM 服务模型名称 -->
+          <div v-if="selectedEngine?.requires_vllm">
+            <label class="block text-sm font-medium text-gray-700 mb-1">vLLM 服务模型名称</label>
+            <input
+              v-model="registerForm.served_model_name"
+              type="text"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              placeholder="如: PaddleOCR-VL-0.9B"
+            />
+            <p class="mt-1 text-xs text-gray-500">vLLM 服务注册的模型名称，用于 API 调用</p>
+          </div>
         </div>
         <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
           <button
@@ -194,6 +206,7 @@ const registerForm = ref({
   engine_name: '',
   vllm_model_path: '',
   gpu_memory_utilization: 0.8,
+  served_model_name: '',
 })
 
 // 计算属性
@@ -272,8 +285,16 @@ async function handleRegister() {
         model_path: registerForm.value.vllm_model_path,
         gpu_memory_utilization: registerForm.value.gpu_memory_utilization,
       }
+      // 添加 served_model_name（如果填写）
+      if (registerForm.value.served_model_name) {
+        data.vllm_config.served_model_name = registerForm.value.served_model_name
+      }
       data.engine_kwargs = {
         vllm_model_path: registerForm.value.vllm_model_path,
+      }
+      // 传递 vllm_model_name 给 engine
+      if (registerForm.value.served_model_name) {
+        data.engine_kwargs.vllm_model_name = registerForm.value.served_model_name
       }
     }
 
@@ -293,6 +314,7 @@ function resetForm() {
     engine_name: '',
     vllm_model_path: '',
     gpu_memory_utilization: 0.8,
+    served_model_name: '',
   }
 }
 
