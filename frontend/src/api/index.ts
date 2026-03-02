@@ -156,6 +156,32 @@ export const filesApi = {
   delete: (id: string) => api.delete<{ status: string; file_id: string }>(`/files/${id}`).then((r) => r.data),
 }
 
+// ==================== GPU API ====================
+
+export interface GpuInfo {
+  index: number
+  name: string
+  memory_total_mb: number
+  memory_used_mb: number
+  memory_free_mb: number
+  memory_utilization: number
+  gpu_utilization: number
+  temperature: number
+  power_draw: number
+  power_limit: number
+}
+
+export interface GpuStatus {
+  available: boolean
+  count: number
+  gpus: GpuInfo[]
+  error: string | null
+}
+
+export const gpuApi = {
+  getStatus: () => api.get<GpuStatus>('/gpu').then((r) => r.data),
+}
+
 // ==================== 健康检查 ====================
 
 export const healthApi = {

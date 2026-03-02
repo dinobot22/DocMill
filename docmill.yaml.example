@@ -1,0 +1,30 @@
+# DocMill 配置文件示例
+# 复制此文件为 docmill.yaml 并修改配置
+
+server:
+  api_port: 8080
+  data_dir: /tmp/docmill
+  workers_per_gpu: 1
+  gpu_devices: "auto"  # "auto" 或 [0, 1, 2]
+
+engines:
+  paddle-ocr-vl:
+    engine: paddle_ocr_vl
+    auto_start: true
+    vllm:
+      mode: managed
+      model_path: PaddlePaddle/PaddleOCR-VL-0.9B
+      gpu_id: 0
+      gpu_memory_utilization: 0.8
+      max_model_len: 4096
+      served_model_name: PaddleOCR-VL-0.9B
+
+  # 外部 vLLM 模式示例
+  # paddle-ocr-vl-external:
+  #   engine: paddle_ocr_vl
+  #   auto_start: false
+  #   vllm:
+  #     mode: external
+  #     endpoints:
+  #       - http://gpu-server-1:30023/v1
+  #       - http://gpu-server-2:30023/v1

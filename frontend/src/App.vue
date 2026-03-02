@@ -34,6 +34,13 @@
             >
               历史记录
             </router-link>
+            <router-link
+              to="/gpu"
+              class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors"
+              :class="{ 'text-primary-600 bg-gray-100': $route.path === '/gpu' }"
+            >
+              GPU监控
+            </router-link>
           </div>
         </div>
       </div>

@@ -1,0 +1,16 @@
+"""DeepSeek OCR Engine 默认配置。"""
+
+engine_name: deepseek_ocr
+requires_vllm: true
+estimate_vram_mb: 0
+
+vllm_defaults:
+  model_path: deepseek-ai/DeepSeek-OCR
+  gpu_memory_utilization: 0.9
+  max_model_len: 8192
+  served_model_name: deepseek-ai/DeepSeek-OCR
+
+requirements:
+  gpu_compute_capability: ">=8.0"
+  python_packages:
+    - openai>=1.0.0

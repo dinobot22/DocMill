@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Type
+
+import yaml
 
 from docmill.engines.base import BaseEngine
 from docmill.utils.logging import get_logger
@@ -105,6 +108,23 @@ class EngineRegistry:
         """清空注册表（主要用于测试）。"""
         cls._engines.clear()
         logger.debug("Engine 注册表已清空")
+
+    @classmethod
+    def get_defaults(cls, name: str) -> dict:
+        """读取 Engine 的 defaults.yaml 作为默认配置。
+
+        Args:
+            name: Engine 名称。
+
+        Returns:
+            默认配置字典。
+        """
+        engine_dir = Path(__file__).parent / name
+        defaults_file = engine_dir / "defaults.yaml"
+        
+        if defaults_file.exists():
+            return yaml.safe_load(defaults_file.read_text()) or {}
+        return {}
 
 
 # 自动注册内置 Engine
