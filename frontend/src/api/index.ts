@@ -182,6 +182,74 @@ export const gpuApi = {
   getStatus: () => api.get<GpuStatus>('/gpu').then((r) => r.data),
 }
 
+// ==================== 任务队列 API ====================
+
+export interface TaskInfo {
+  task_id: string
+  engine: string
+  file_path: string
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+  priority: number
+  options: Record<string, any>
+  result_path: string | null
+  error_message: string | null
+  worker_id: string | null
+  parent_task_id: string | null
+  is_parent: boolean
+  child_count: number
+  child_completed: number
+  retry_count: number
+  created_at: string | null
+  started_at: string | null
+  completed_at: string | null
+}
+
+export interface TaskSubmitRequest {
+  engine: string
+  file_path: string
+  priority?: number
+  options?: Record<string, any>
+}
+
+export interface TaskSubmitResponse {
+  task_id: string
+  status: string
+}
+
+export interface TaskStats {
+  pending: number
+  processing: number
+  completed: number
+  failed: number
+  cancelled: number
+}
+
+export const tasksApi = {
+  // 提交任务
+  submit: (data: TaskSubmitRequest) =>
+    api.post<TaskSubmitResponse>('/api/v1/tasks', data).then((r) => r.data),
+
+  // 查询任务状态
+  getStatus: (taskId: string) =>
+    api.get<TaskInfo>(`/api/v1/tasks/${taskId}`).then((r) => r.data),
+
+  // 获取任务结果
+  getResult: (taskId: string) =>
+    api.get<{ result_path: string }>(`/api/v1/tasks/${taskId}/result`).then((r) => r.data),
+
+  // 取消任务
+  cancel: (taskId: string) =>
+    api.delete<{ message: string }>(`/api/v1/tasks/${taskId}`).then((r) => r.data),
+
+  // 任务列表
+  list: (params?: { status?: string; limit?: number; offset?: number }) =>
+    api.get<TaskInfo[]>('/api/v1/tasks', { params }).then((r) => r.data),
+
+  // 队列统计
+  getStats: () =>
+    api.get<TaskStats>('/api/v1/queue/stats').then((r) => r.data),
+}
+
 // ==================== 健康检查 ====================
 
 export const healthApi = {

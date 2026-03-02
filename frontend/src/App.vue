@@ -21,6 +21,13 @@
               OCR 识别
             </router-link>
             <router-link
+              to="/tasks"
+              class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors"
+              :class="{ 'text-primary-600 bg-gray-100': $route.path === '/tasks' }"
+            >
+              任务队列
+            </router-link>
+            <router-link
               to="/models"
               class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors"
               :class="{ 'text-primary-600 bg-gray-100': $route.path === '/models' }"

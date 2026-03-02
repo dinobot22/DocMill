@@ -19,6 +19,11 @@ const router = createRouter({
       component: () => import('@/views/History.vue'),
     },
     {
+      path: '/tasks',
+      name: 'tasks',
+      component: () => import('@/views/Tasks.vue'),
+    },
+    {
       path: '/gpu',
       name: 'gpu',
       component: () => import('@/views/GpuMonitor.vue'),
