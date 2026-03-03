@@ -121,6 +121,7 @@ class TaskStore:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA cache_size=-64000")  # 64MB 页缓存
         conn.row_factory = sqlite3.Row
         return conn
     
@@ -131,14 +132,11 @@ class TaskStore:
         priority: int = 0,
         options: dict[str, Any] | None = None,
         parent_task_id: str | None = None,
+        is_parent: bool = False,
     ) -> Task:
         """创建新任务"""
         import uuid
         task_id = str(uuid.uuid4())
-        
-        is_parent = False
-        if parent_task_id is None:
-            is_parent = True
         
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -301,8 +299,8 @@ class TaskStore:
         
         cursor.execute("""
             UPDATE tasks
-            SET child_count = child_count + 1
-            WHERE task_id = ? AND is_parent = 1
+            SET child_count = child_count + 1, is_parent = 1
+            WHERE task_id = ?
         """, (parent_id,))
         
         conn.commit()

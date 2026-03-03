@@ -4,12 +4,6 @@ estimate_vram_mb: 2048
 
 vllm_defaults:
   model_path: PaddlePaddle/PaddleOCR-VL-0.9B
-  gpu_memory_utilization: 0.8
+  gpu_memory_utilization: 0.2
   max_model_len: 4096
   served_model_name: PaddleOCR-VL-0.9B
-
-requirements:
-  gpu_compute_capability: ">=8.0"
-  python_packages:
-    - paddlepaddle-gpu>=3.0.0
-    - paddleocr[doc-parser]

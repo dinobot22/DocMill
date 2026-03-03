@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+import os as _os
+import sys as _sys
+
+# 将项目根目录加入 sys.path，使本文件可被直接执行（无需 pip install）
+_PROJECT_ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+if _PROJECT_ROOT not in _sys.path:
+    _sys.path.insert(0, _PROJECT_ROOT)
+
 import atexit
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -155,12 +163,13 @@ def create_app(
     Returns:
         配置好的 FastAPI 应用。
     """
-    global DATA_DIR, UPLOAD_DIR, HISTORY_DB
+    global DATA_DIR, UPLOAD_DIR, HISTORY_DB, TASKS_DB
 
     if data_dir:
         DATA_DIR = Path(data_dir)
         UPLOAD_DIR = DATA_DIR / "uploads"
         HISTORY_DB = DATA_DIR / "history.db"
+        TASKS_DB = DATA_DIR / "tasks.db"
 
     if static_dir:
         mount_static_files(app, Path(static_dir))
@@ -171,4 +180,10 @@ def create_app(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(
+        "docmill.server.main:app",
+        host="0.0.0.0",
+        port=8080,
+        reload=True,
+        reload_dirs=[_PROJECT_ROOT],
+    )

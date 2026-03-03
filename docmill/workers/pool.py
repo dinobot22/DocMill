@@ -11,7 +11,6 @@ from multiprocessing import Process
 from typing import TYPE_CHECKING
 
 from docmill.config.schema import ServerConfig
-from docmill.tasks.task_manager import AsyncTaskManager
 from docmill.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -30,7 +29,7 @@ class WorkerPool:
     
     使用示例：
         config = ServerConfig(workers_per_gpu=2, gpu_devices=[0, 1])
-        pool = WorkerPool(config, task_manager)
+        pool = WorkerPool(config, task_store)
         pool.start()  # 启动 Worker 进程
         # ...
         pool.shutdown()  # 关闭所有 Worker
@@ -39,11 +38,9 @@ class WorkerPool:
     def __init__(
         self,
         config: ServerConfig,
-        task_manager: AsyncTaskManager,
         task_store: "TaskStore",
     ):
         self.config = config
-        self.task_manager = task_manager
         self.task_store = task_store
         self._processes: list[Process] = []
         self._running = False
@@ -146,78 +143,93 @@ class WorkerPool:
 
 def worker_main(gpu_id: int, worker_id: str, task_store: "TaskStore"):
     """Worker 子进程入口。
-    
+
     Args:
         gpu_id: GPU 设备 ID
         worker_id: Worker ID
-        task_store: 任务存储实例
+        task_store: 任务存储实例（跨进程共享 SQLite 文件）
     """
+    import time
+
     # 1. GPU 隔离 — 必须在 import 任何 CUDA 库之前设置
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-    
+
     # 2. 设置日志
     from docmill.utils.logging import setup_logging
     setup_logging()
-    
-    logger = get_logger("worker")
-    logger.info("Worker 启动: %s, GPU %d", worker_id, gpu_id)
-    
+
+    _logger = get_logger("worker")
+    _logger.info("Worker 启动: %s, GPU %d", worker_id, gpu_id)
+
     # 3. 创建独立的 DocMill 实例
     from docmill.core import DocMill
+    from docmill.tasks.task_store import TaskStatus
+
     docmill = DocMill(
         sidecar_log_dir="/tmp/docmill/sidecar_logs",
         default_gpu_id=gpu_id,
     )
-    
-    # 4. 创建任务管理器
-    from docmill.tasks.task_manager import AsyncTaskManager
-    task_manager = AsyncTaskManager(task_store)
-    task_manager.set_docmill(docmill)
-    
-    # 5. 任务循环
-    from docmill.tasks.task_store import TaskStatus
-    
+
+    # 4. 任务循环（同步轮询，不依赖跨进程 asyncio.Event）
     while True:
         try:
-            task = task_manager.wait_for_task(worker_id, timeout=30.0)
-            
+            # 原子拉取任务（SQLite IMMEDIATE 事务保证并发安全）
+            task = task_store.get_next(worker_id)
+
             if task is None:
+                time.sleep(1.0)  # 没有任务时短暂休眠后重试
                 continue
-            
-            logger.info("开始处理任务: task_id=%s, engine=%s, file=%s",
-                       task.task_id, task.engine, task.file_path)
-            
+
+            _logger.info(
+                "开始处理任务: task_id=%s, engine=%s, file=%s",
+                task.task_id, task.engine, task.file_path,
+            )
+
             try:
                 # 确保模型就绪
                 docmill.ensure_model_ready(task.engine)
-                
+
                 # 执行推理
                 result = docmill.infer(task.engine, task.file_path, **task.options)
-                
+
                 # 保存结果
                 from pathlib import Path
                 result_dir = Path("/tmp/docmill/results") / task.task_id
                 result_dir.mkdir(parents=True, exist_ok=True)
-                
+
                 result_path = result_dir / "result.md"
                 result_path.write_text(result.text, encoding="utf-8")
-                
-                # 更新任务状态
-                task_manager.complete(task.task_id, result_path=str(result_path))
-                
-                logger.info("任务完成: task_id=%s", task.task_id)
-            
+
+                # 更新任务状态（同步调用）
+                task_store.update_status(
+                    task.task_id,
+                    TaskStatus.COMPLETED,
+                    result_path=str(result_path),
+                )
+
+                # 子任务完成回调
+                task_store.on_child_completed(task.task_id)
+
+                _logger.info("任务完成: task_id=%s", task.task_id)
+
             except Exception as e:
-                logger.error("任务失败: task_id=%s, error=%s", task.task_id, e)
-                task_manager.fail(task.task_id, str(e))
-        
+                _logger.error("任务失败: task_id=%s, error=%s", task.task_id, e)
+                task_store.update_status(
+                    task.task_id,
+                    TaskStatus.FAILED,
+                    error_message=str(e),
+                )
+                task_store.on_child_failed(task.task_id, str(e))
+
         except KeyboardInterrupt:
-            logger.info("Worker 收到中断信号，正在退出...")
+            _logger.info("Worker 收到中断信号，正在退出...")
             break
         except Exception as e:
-            logger.error("Worker 异常: %s", e)
+            _logger.error("Worker 异常: %s", e)
+            time.sleep(1.0)
             continue
-    
-    # 6. 清理
+
+    # 5. 清理
     docmill.shutdown()
-    logger.info("Worker 退出: %s", worker_id)
+    _logger.info("Worker 退出: %s", worker_id)
+

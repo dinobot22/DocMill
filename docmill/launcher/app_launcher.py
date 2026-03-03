@@ -5,6 +5,14 @@
 
 from __future__ import annotations
 
+import os as _os
+import sys as _sys
+
+# 将项目根目录加入 sys.path（无需 pip install 即可直接执行）
+_PROJECT_ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+if _PROJECT_ROOT not in _sys.path:
+    _sys.path.insert(0, _PROJECT_ROOT)
+
 import signal
 import sys
 from pathlib import Path
